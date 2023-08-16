@@ -6,13 +6,13 @@ import { AxiosError } from 'axios';
 import { IError, ISigninError } from '../types/error.type';
 import ErrorPrint from '../components/ErrorPrint';
 import Layout from '../components/layout/Layout';
-import { useRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { getToken, setToken } from '../services/tokenService';
 import { updateHeader } from '../api/api';
 
 const Signin = () => {
-  const [_, setUser] = useRecoilState(currentUserState);
+  const setUser = useSetRecoilState(currentUserState);
   const [signinStatusData, setSigninStatusData] = useState<ISigninError>();
 
   const navigate = useNavigate();
