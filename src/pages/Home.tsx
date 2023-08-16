@@ -1,13 +1,46 @@
 import Layout from '../components/layout/Layout';
-import tagApi from '../api/tagApi';
-import { useQuery } from '@tanstack/react-query';
-import { feedApi } from '../api/articlesApi';
 import { useRecoilValue } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { useState, useEffect } from 'react';
 import ArticlePreview from '../components/ArticlePreview';
+import {
+  useGlobalArticlesQuery,
+  useMyArticlesQuery,
+  useTagArticlesQuery,
+  useTagQuery,
+} from '../hooks/home';
 
 type FeedType = 'following' | 'global' | 'tag';
+
+const pageButtonList = (
+  articlesCount: number,
+  offset: number,
+  onClickPageButton: (buttonEvent: React.MouseEvent<HTMLLIElement>) => void,
+) => {
+  if (articlesCount <= 10) {
+    return;
+  }
+
+  const buttonCount = articlesCount % 10 ? articlesCount / 10 + 1 : articlesCount / 10;
+  const buttonList: React.ReactNode[] = [];
+  const currentPage = (offset + 10) / 10;
+
+  for (let i = 1; i <= buttonCount; i++) {
+    buttonList.push(
+      <li
+        key={i}
+        className={`page-item ${currentPage === i ? 'active' : ''}`}
+        onClick={onClickPageButton}
+        style={{
+          cursor: 'pointer',
+        }}
+      >
+        <a className="page-link">{i}</a>
+      </li>,
+    );
+  }
+  return buttonList;
+};
 
 const Home = () => {
   const user = useRecoilValue(currentUserState);
@@ -16,112 +49,45 @@ const Home = () => {
   const [currentFeed, setCurrentFeed] = useState<FeedType>('global');
   const [currentTag, setCurrentTag] = useState('');
 
-  const { isLoading: tagIsLoading, data: tagData } = useQuery({
-    queryKey: ['tags'],
-    queryFn: async () => {
-      try {
-        const response = await tagApi.get();
-        return response.data.tags;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-  });
+  const { isLoading: tagIsLoading, data: tagData } = useTagQuery();
 
   const {
     isLoading: globalTabIsLoading,
     isRefetching: globalTabIsRefetching,
     refetch: globalTabRefetch,
     data: globalArticlesData,
-  } = useQuery({
-    queryKey: ['globalArticles'],
-    queryFn: async () => {
-      try {
-        const response = await feedApi.getFeed({ offset: offset });
-        return response.data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    staleTime: 60000,
-  });
+  } = useGlobalArticlesQuery(offset);
 
   const {
     isLoading: myTabIsLoading,
     isRefetching: myTabIsRefetching,
     data: myArticlesData,
     refetch: myTabRefetch,
-  } = useQuery({
-    queryKey: ['myArticles'],
-    queryFn: async () => {
-      try {
-        if (user.user.username !== undefined) {
-          const response = await feedApi.getFollowingFeed(offset);
-          return response.data;
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-  });
+  } = useMyArticlesQuery(user, offset);
 
   const {
     isLoading: tagTabIsLoading,
     isRefetching: tagTabIsRefetching,
     data: tagFeedData,
     refetch: tagTabRefetch,
-  } = useQuery({
-    queryKey: ['tagArticles'],
-    queryFn: async () => {
-      try {
-        const response = await feedApi.getFeed({ offset: offset, tag: currentTag });
-        return response.data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    enabled: false,
-  });
-
-  const pageButtonList = (articlesCount: number) => {
-    if (articlesCount <= 10) {
-      return;
-    }
-
-    const buttonCount = articlesCount % 10 ? articlesCount / 10 + 1 : articlesCount / 10;
-    const buttonList: React.ReactNode[] = [];
-    const currentPage = (offset + 10) / 10;
-
-    for (let i = 1; i <= buttonCount; i++) {
-      buttonList.push(
-        <li
-          key={i}
-          className={`page-item ${currentPage === i ? 'active' : ''}`}
-          onClick={onClickPageButton}
-          style={{
-            cursor: 'pointer',
-          }}
-        >
-          <a className="page-link">{i}</a>
-        </li>,
-      );
-    }
-    return buttonList;
-  };
+  } = useTagArticlesQuery(offset, currentTag);
 
   const onClickPageButton = (buttonEvent: React.MouseEvent<HTMLLIElement>) => {
-    setOffset(buttonEvent.target.innerText * 10 - 10);
+    const pageNumber = buttonEvent.currentTarget.innerText;
+    setOffset(Number(pageNumber) * 10 - 10);
   };
 
   const onClickTab = (anchorEvent: React.MouseEvent<HTMLAnchorElement>) => {
-    setCurrentFeed(anchorEvent.target.id);
+    const feedType = anchorEvent.currentTarget.id;
+    setCurrentFeed(feedType as FeedType);
     setCurrentTag('');
     setOffset(0);
   };
 
   const onClickTag = (anchorEvent: React.MouseEvent<HTMLAnchorElement>) => {
+    const currentTag = anchorEvent.currentTarget.innerText;
     setCurrentFeed('tag');
-    setCurrentTag(anchorEvent.target.innerText);
+    setCurrentTag(currentTag);
     setOffset(0);
   };
 
@@ -205,7 +171,11 @@ const Home = () => {
                     )}
                     <nav>
                       <ul className="pagination">
-                        {pageButtonList(globalArticlesData?.articlesCount as number)}
+                        {pageButtonList(
+                          globalArticlesData?.articlesCount as number,
+                          offset,
+                          onClickPageButton,
+                        )}
                       </ul>
                     </nav>
                   </>
@@ -227,7 +197,7 @@ const Home = () => {
                     <nav>
                       <ul className="pagination">
                         <ul className="pagination">
-                          {pageButtonList(myArticlesData?.articlesCount)}
+                          {pageButtonList(myArticlesData?.articlesCount, offset, onClickPageButton)}
                         </ul>
                       </ul>
                     </nav>
@@ -249,7 +219,9 @@ const Home = () => {
                     )}
                     <nav>
                       <ul className="pagination">
-                        <ul className="pagination">{pageButtonList(tagFeedData?.articlesCount)}</ul>
+                        <ul className="pagination">
+                          {pageButtonList(tagFeedData?.articlesCount, offset, onClickPageButton)}
+                        </ul>
                       </ul>
                     </nav>
                   </>
