@@ -73,18 +73,21 @@ const Home = () => {
   } = useTagArticlesQuery(offset, currentTag);
 
   const onClickPageButton = (buttonEvent: React.MouseEvent<HTMLLIElement>) => {
-    setOffset(buttonEvent.target.innerText * 10 - 10);
+    const pageNumber = buttonEvent.currentTarget.innerText;
+    setOffset(Number(pageNumber) * 10 - 10);
   };
 
   const onClickTab = (anchorEvent: React.MouseEvent<HTMLAnchorElement>) => {
-    setCurrentFeed(anchorEvent.target.id);
+    const feedType = anchorEvent.currentTarget.id;
+    setCurrentFeed(feedType as FeedType);
     setCurrentTag('');
     setOffset(0);
   };
 
   const onClickTag = (anchorEvent: React.MouseEvent<HTMLAnchorElement>) => {
+    const currentTag = anchorEvent.currentTarget.innerText;
     setCurrentFeed('tag');
-    setCurrentTag(anchorEvent.target.innerText);
+    setCurrentTag(currentTag);
     setOffset(0);
   };
 
