@@ -3,3 +3,7 @@ export interface IError {
     [key: string]: string[];
   };
 }
+
+export interface ISigninError extends IError {
+  signinStatus: boolean;
+}
