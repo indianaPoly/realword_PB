@@ -6,6 +6,12 @@ import { useRecoilValue } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { useState, useEffect } from 'react';
 import ArticlePreview from '../components/ArticlePreview';
+import {
+  useGlobalArticlesQuery,
+  useMyArticlesQuery,
+  useTagArticlesQuery,
+  useTagQuery,
+} from '../hooks/home';
 
 type FeedType = 'following' | 'global' | 'tag';
 
@@ -16,72 +22,29 @@ const Home = () => {
   const [currentFeed, setCurrentFeed] = useState<FeedType>('global');
   const [currentTag, setCurrentTag] = useState('');
 
-  const { isLoading: tagIsLoading, data: tagData } = useQuery({
-    queryKey: ['tags'],
-    queryFn: async () => {
-      try {
-        const response = await tagApi.get();
-        return response.data.tags;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-  });
+  // useQuery Hook 분리하기
+  const { isLoading: tagIsLoading, data: tagData } = useTagQuery();
 
   const {
     isLoading: globalTabIsLoading,
     isRefetching: globalTabIsRefetching,
     refetch: globalTabRefetch,
     data: globalArticlesData,
-  } = useQuery({
-    queryKey: ['globalArticles'],
-    queryFn: async () => {
-      try {
-        const response = await feedApi.getFeed({ offset: offset });
-        return response.data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    staleTime: 60000,
-  });
+  } = useGlobalArticlesQuery(offset);
 
   const {
     isLoading: myTabIsLoading,
     isRefetching: myTabIsRefetching,
     data: myArticlesData,
     refetch: myTabRefetch,
-  } = useQuery({
-    queryKey: ['myArticles'],
-    queryFn: async () => {
-      try {
-        if (user.user.username !== undefined) {
-          const response = await feedApi.getFollowingFeed(offset);
-          return response.data;
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-  });
+  } = useMyArticlesQuery(user, offset);
 
   const {
     isLoading: tagTabIsLoading,
     isRefetching: tagTabIsRefetching,
     data: tagFeedData,
     refetch: tagTabRefetch,
-  } = useQuery({
-    queryKey: ['tagArticles'],
-    queryFn: async () => {
-      try {
-        const response = await feedApi.getFeed({ offset: offset, tag: currentTag });
-        return response.data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    enabled: false,
-  });
+  } = useTagArticlesQuery(offset, currentTag);
 
   const pageButtonList = (articlesCount: number) => {
     if (articlesCount <= 10) {
