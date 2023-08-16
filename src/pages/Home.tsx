@@ -1,7 +1,4 @@
 import Layout from '../components/layout/Layout';
-import tagApi from '../api/tagApi';
-import { useQuery } from '@tanstack/react-query';
-import { feedApi } from '../api/articlesApi';
 import { useRecoilValue } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { useState, useEffect } from 'react';
@@ -15,6 +12,36 @@ import {
 
 type FeedType = 'following' | 'global' | 'tag';
 
+const pageButtonList = (
+  articlesCount: number,
+  offset: number,
+  onClickPageButton: (buttonEvent: React.MouseEvent<HTMLLIElement>) => void,
+) => {
+  if (articlesCount <= 10) {
+    return;
+  }
+
+  const buttonCount = articlesCount % 10 ? articlesCount / 10 + 1 : articlesCount / 10;
+  const buttonList: React.ReactNode[] = [];
+  const currentPage = (offset + 10) / 10;
+
+  for (let i = 1; i <= buttonCount; i++) {
+    buttonList.push(
+      <li
+        key={i}
+        className={`page-item ${currentPage === i ? 'active' : ''}`}
+        onClick={onClickPageButton}
+        style={{
+          cursor: 'pointer',
+        }}
+      >
+        <a className="page-link">{i}</a>
+      </li>,
+    );
+  }
+  return buttonList;
+};
+
 const Home = () => {
   const user = useRecoilValue(currentUserState);
 
@@ -22,7 +49,6 @@ const Home = () => {
   const [currentFeed, setCurrentFeed] = useState<FeedType>('global');
   const [currentTag, setCurrentTag] = useState('');
 
-  // useQuery Hook 분리하기
   const { isLoading: tagIsLoading, data: tagData } = useTagQuery();
 
   const {
@@ -45,32 +71,6 @@ const Home = () => {
     data: tagFeedData,
     refetch: tagTabRefetch,
   } = useTagArticlesQuery(offset, currentTag);
-
-  const pageButtonList = (articlesCount: number) => {
-    if (articlesCount <= 10) {
-      return;
-    }
-
-    const buttonCount = articlesCount % 10 ? articlesCount / 10 + 1 : articlesCount / 10;
-    const buttonList: React.ReactNode[] = [];
-    const currentPage = (offset + 10) / 10;
-
-    for (let i = 1; i <= buttonCount; i++) {
-      buttonList.push(
-        <li
-          key={i}
-          className={`page-item ${currentPage === i ? 'active' : ''}`}
-          onClick={onClickPageButton}
-          style={{
-            cursor: 'pointer',
-          }}
-        >
-          <a className="page-link">{i}</a>
-        </li>,
-      );
-    }
-    return buttonList;
-  };
 
   const onClickPageButton = (buttonEvent: React.MouseEvent<HTMLLIElement>) => {
     setOffset(buttonEvent.target.innerText * 10 - 10);
@@ -168,7 +168,11 @@ const Home = () => {
                     )}
                     <nav>
                       <ul className="pagination">
-                        {pageButtonList(globalArticlesData?.articlesCount as number)}
+                        {pageButtonList(
+                          globalArticlesData?.articlesCount as number,
+                          offset,
+                          onClickPageButton,
+                        )}
                       </ul>
                     </nav>
                   </>
@@ -190,7 +194,7 @@ const Home = () => {
                     <nav>
                       <ul className="pagination">
                         <ul className="pagination">
-                          {pageButtonList(myArticlesData?.articlesCount)}
+                          {pageButtonList(myArticlesData?.articlesCount, offset, onClickPageButton)}
                         </ul>
                       </ul>
                     </nav>
@@ -212,7 +216,9 @@ const Home = () => {
                     )}
                     <nav>
                       <ul className="pagination">
-                        <ul className="pagination">{pageButtonList(tagFeedData?.articlesCount)}</ul>
+                        <ul className="pagination">
+                          {pageButtonList(tagFeedData?.articlesCount, offset, onClickPageButton)}
+                        </ul>
                       </ul>
                     </nav>
                   </>
