@@ -23,12 +23,14 @@ const Signup = () => {
 
   const onSubmitSignupData = (formEvent: React.MouseEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-    const signupData = {
-      email: emailRef.current!.value,
-      username: usernameRef.current!.value,
-      password: passwordRef.current!.value,
-    };
-    join(signupData);
+    if (emailRef.current !== null && usernameRef.current !== null && passwordRef.current !== null) {
+      const signupData = {
+        email: emailRef.current!.value,
+        username: usernameRef.current!.value,
+        password: passwordRef.current!.value,
+      };
+      join(signupData);
+    }
   };
 
   const join = async (signupData: IJoinUserData) => {
