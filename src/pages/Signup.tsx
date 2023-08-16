@@ -1,22 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { IJoinUserData } from '../types/userApi.type';
 import { AxiosError } from 'axios';
-import { IError } from '../types/error.type';
+import { IError, ISignupError } from '../types/error.type';
 import Layout from '../components/layout/Layout';
 import { userApi } from '../api/userApi';
 import ErrorPrint from '../components/ErrorPrint';
 import { getToken, setToken } from '../services/tokenService';
 import { updateHeader } from '../api/api';
 
-interface ISignupError extends IError {
-  signupStatus: boolean;
-}
-
 const Signup = () => {
-  const [_, setUser] = useRecoilState(currentUserState);
+  const setUser = useSetRecoilState(currentUserState);
   const [signupStatusData, setSignupStatusData] = useState<ISignupError>();
 
   const emailRef = useRef<HTMLInputElement>(null);
@@ -27,12 +23,14 @@ const Signup = () => {
 
   const onSubmitSignupData = (formEvent: React.MouseEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-    const signupData = {
-      email: emailRef.current!.value,
-      username: usernameRef.current!.value,
-      password: passwordRef.current!.value,
-    };
-    join(signupData);
+    if (emailRef.current !== null && usernameRef.current !== null && passwordRef.current !== null) {
+      const signupData = {
+        email: emailRef.current!.value,
+        username: usernameRef.current!.value,
+        password: passwordRef.current!.value,
+      };
+      join(signupData);
+    }
   };
 
   const join = async (signupData: IJoinUserData) => {

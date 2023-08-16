@@ -7,3 +7,7 @@ export interface IError {
 export interface ISigninError extends IError {
   signinStatus: boolean;
 }
+
+export interface ISignupError extends IError {
+  signupStatus: boolean;
+}
