@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { IJoinUserData } from '../types/userApi.type';
 import { AxiosError } from 'axios';
@@ -12,7 +12,7 @@ import { getToken, setToken } from '../services/tokenService';
 import { updateHeader } from '../api/api';
 
 const Signup = () => {
-  const [_, setUser] = useRecoilState(currentUserState);
+  const setUser = useSetRecoilState(currentUserState);
   const [signupStatusData, setSignupStatusData] = useState<ISignupError>();
 
   const emailRef = useRef<HTMLInputElement>(null);
