@@ -22,11 +22,13 @@ const Signin = () => {
 
   const onSubmitSigninData = (formEvent: React.MouseEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-    const signinData = {
-      email: emailRef.current!.value,
-      password: passwordRef.current!.value,
-    };
-    login(signinData);
+    if (emailRef.current !== null && passwordRef.current !== null) {
+      const signinData = {
+        email: emailRef.current.value,
+        password: passwordRef.current.value,
+      };
+      login(signinData);
+    }
   };
 
   const login = async (signinData: ILoginUserData) => {
