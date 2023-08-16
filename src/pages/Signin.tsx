@@ -3,20 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { userApi } from '../api/userApi';
 import { ILoginUserData } from '../types/userApi.type';
 import { AxiosError } from 'axios';
-import { IError } from '../types/error.type';
+import { IError, ISigninError } from '../types/error.type';
 import ErrorPrint from '../components/ErrorPrint';
 import Layout from '../components/layout/Layout';
-import { useRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 import { currentUserState } from '../recoil/atom/currentUserData';
 import { getToken, setToken } from '../services/tokenService';
 import { updateHeader } from '../api/api';
 
-interface ISigninError extends IError {
-  signinStatus: boolean;
-}
-
 const Signin = () => {
-  const [_, setUser] = useRecoilState(currentUserState);
+  const setUser = useSetRecoilState(currentUserState);
   const [signinStatusData, setSigninStatusData] = useState<ISigninError>();
 
   const navigate = useNavigate();
@@ -26,11 +22,13 @@ const Signin = () => {
 
   const onSubmitSigninData = (formEvent: React.MouseEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-    const signinData = {
-      email: emailRef.current!.value,
-      password: passwordRef.current!.value,
-    };
-    login(signinData);
+    if (emailRef.current !== null && passwordRef.current !== null) {
+      const signinData = {
+        email: emailRef.current.value,
+        password: passwordRef.current.value,
+      };
+      login(signinData);
+    }
   };
 
   const login = async (signinData: ILoginUserData) => {
